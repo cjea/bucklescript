@@ -65,14 +65,23 @@ let op_prec, op_str  =
   Js_op_util.(op_prec, op_str)
 
 
+let rec comma_strings  f (ls : string list)  =
+  match ls with
+  | [] -> ()
+  | [x] -> P.string  f x
+  | y :: ys ->
+    P.string f y;
+    P.string f L.comma;
+    comma_strings  f ys
+
 let rec comma_idents  cxt f (ls : Ident.t list)  =
   match ls with
   | [] -> cxt
   | [x] -> Ext_pp_scope.ident cxt f x
   | y :: ys ->
-    let cxt = Ext_pp_scope.ident cxt f y in
-    P.string f L.comma;
-    comma_idents cxt f ys
+     let cxt = Ext_pp_scope.ident cxt f y in
+     P.string f L.comma;
+     comma_idents cxt f ys    
 let ipp_ident cxt f id un_used =
   if un_used then
     Ext_pp_scope.ident cxt f (Ext_ident.make_unused ())
@@ -539,7 +548,16 @@ and
     *)
     Js_dump_string.pp_string f  s;
     cxt
-
+  | Raw_js_function (s,params) ->   
+    P.string f L.function_; 
+    P.space f ; 
+    P.paren_group f 1 (fun _ ->
+      comma_strings f params
+    );
+    P.newline f ; 
+    P.brace f (fun _ -> 
+    P.string f s);
+    cxt 
   | Raw_js_code (s,info) ->
     begin match info with
       | Exp ->
@@ -1025,7 +1043,9 @@ and statement_desc top cxt f (s : J.statement_desc) : Ext_pp_scope.t =
       | Call ({expression_desc = Fun _; },_,_) -> true
       (* | Caml_uninitialized_obj _  *)
       | Raw_js_code (_, Exp)
-      | Fun _ | Object _ -> true
+      | Fun _ 
+      | Raw_js_function _ 
+      | Object _ -> true
       | Raw_js_code (_,Stmt)
       | Caml_block_set_tag _
       | Length _

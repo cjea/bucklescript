@@ -27,7 +27,7 @@ let handle_extension record_as_js_object e (self : Bs_ast_mapper.mapper)
     (({txt ; loc} as lid , payload) : Parsetree.extension) = 
   begin match txt with
     | "bs.raw" | "raw" -> 
-      Ast_util.handle_raw loc payload
+      Ast_util.handle_raw ~check_js_regex:false loc payload
     | "bs.re" | "re" ->
       Exp.constraint_ ~loc
         (Ast_util.handle_raw ~check_js_regex:true loc payload)

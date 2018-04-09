@@ -87,7 +87,7 @@ let rec unsafe_mapper : Bs_ast_mapper.mapper =
             Ast_utf8_string_interp.transform_interp loc s
           else e
         (** End rewriting *)
-        | Pexp_function cases ->
+      | Pexp_function cases ->
           (* {[ function [@bs.exn]
                 | Not_found -> 0
                 | Invalid_argument -> 1
