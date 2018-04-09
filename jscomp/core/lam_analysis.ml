@@ -38,7 +38,8 @@ let rec no_side_effects (lam : Lam.t) : bool =
   match lam with 
   | Lvar _ 
   | Lconst _ 
-  | Lfunction _ -> true
+  | Lfunction _ 
+  -> true
   | Lam.Lglobal_module _ -> true 
     (* we record side effect in the global level, 
       this expression itself is side effect free
@@ -159,6 +160,7 @@ let rec no_side_effects (lam : Lam.t) : bool =
       | Pcaml_obj_length
       (* | Pjs_is_instance_array *)
       | Pwrap_exn
+      | Praw_js_function _
         -> true
       | Pcaml_obj_set_length        
       | Pjs_apply
@@ -604,6 +606,7 @@ and eq_primitive ( lhs : Lam.primitive) (rhs : Lam.primitive) =
 
   | Pbigarrayref  _ 
   | Pbigarrayset _ 
+  | Praw_js_function _
   | Praw_js_code_exp _ 
   | Praw_js_code_stmt _ -> false (* TOO lazy, here comparison is only approximation*)
   

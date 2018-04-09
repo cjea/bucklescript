@@ -9837,6 +9837,7 @@ val setter_suffix_len : int
 val debugger : string
 val raw_expr : string
 val raw_stmt : string
+val raw_function : string
 val unsafe_downgrade : string
 val fn_run : string
 val method_run : string
@@ -9971,6 +9972,7 @@ let setter_suffix_len = String.length setter_suffix
 let debugger = "debugger"
 let raw_expr = "raw_expr"
 let raw_stmt = "raw_stmt"
+let raw_function = "raw_function"
 let unsafe_downgrade = "unsafe_downgrade"
 let fn_run = "fn_run"
 let method_run = "method_run"
@@ -18320,6 +18322,11 @@ val handle_extension :
   Parsetree.extension ->
   Parsetree.expression
 
+
+type t = { args : string list ; block :  string }
+
+val fromString : string -> t 
+  
 end = struct
 #1 "ast_exp_extension.ml"
 (* Copyright (C) 2018 Authors of BuckleScript
@@ -18347,11 +18354,54 @@ end = struct
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *)
 open Ast_helper
 
+let rec unroll_function acc (body : Parsetree.expression) =
+  match body.pexp_desc with
+  | Pexp_constant(Const_string(block,_)) -> acc, block
+  | Pexp_fun("",None,{ppat_desc = Ppat_var s},cont) -> 
+    unroll_function (s.txt::acc) cont
+  | _ -> 
+    Location.raise_errorf ~loc:body.pexp_loc  
+    "bs.raw can only be applied to a string or a special function form "
+
+type t = { args : string list ; block :  string }
+
+let toString (x : t) = Marshal.to_string x []
+
+(* exception handling*)
+let fromString (x : string) : t = Marshal.from_string x 0 
+
 let handle_extension record_as_js_object e (self : Bs_ast_mapper.mapper)
     (({txt ; loc} as lid , payload) : Parsetree.extension) = 
   begin match txt with
     | "bs.raw" | "raw" -> 
-      Ast_util.handle_raw ~check_js_regex:false loc payload
+      begin match payload with 
+      | PStr [{pstr_desc = Pstr_eval({pexp_desc = Pexp_fun("",None,pat,body)},_)}]
+         -> 
+         begin match pat.ppat_desc, body.pexp_desc with 
+         | Ppat_construct ({txt = Lident "()"}, None), Pexp_constant(Const_string(block,_))
+           -> 
+
+            (* Str.eval ~loc  *)
+            (Exp.apply ~loc 
+            (Exp.ident {txt = Ldot (Ast_literal.Lid.js_unsafe, Literals.raw_function);loc})
+            [ "", Exp.constant ~loc (Const_string (toString {args = [] ; block }, None));
+            
+            ]
+            )
+         | Ppat_var ({txt;}), _ -> 
+            let acc, block = unroll_function [txt] body in 
+            (* Str.eval ~loc  *)
+            (Exp.apply ~loc 
+            (Exp.ident {txt = Ldot (Ast_literal.Lid.js_unsafe, Literals.raw_function);loc})
+            [ "", Exp.constant ~loc (Const_string (toString {args = List.rev acc ; block },None));
+            
+            ]
+            
+            )
+         | _ -> Location.raise_errorf ~loc "bs.raw can only be applied to a string or a special function form "
+         end 
+      | _ ->   Ast_util.handle_raw ~check_js_regex:false loc payload
+      end
     | "bs.re" | "re" ->
       Exp.constraint_ ~loc
         (Ast_util.handle_raw ~check_js_regex:true loc payload)

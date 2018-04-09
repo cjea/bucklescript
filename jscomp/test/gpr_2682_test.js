@@ -1,1 +1,9 @@
-/* This output is empty. Its source's type definitions, externals and/or unused code got optimized away. */
+'use strict';
+
+
+var forEach = function (a,b){ 
+  return a + b
+};
+
+exports.forEach = forEach;
+/* No side effect */

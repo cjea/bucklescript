@@ -134,11 +134,11 @@ type 'a selector = 'a -> 'a -> 'a
 module O = struct
   external isArray : 'a -> bool = "Array.isArray" [@@bs.val]
   type key = string
-  let for_in : (Obj.t -> (key -> unit) -> unit) [@bs] = [%bs.raw
-    {|function (o, foo) {
+  let for_in : (Obj.t -> (key -> unit) -> unit) [@bs] = 
+    fun%raw o foo ->  {|
         for (var x in o) { foo(x) }
-      }
-    |}]
+      |}
+    
   external hasOwnProperty : key -> bool [@bs.meth] = "" [@@bs.val]
   let hasOwnProperty (o: Obj.t) (key: key) : bool = (Obj.magic o)##hasOwnProperty(key)
   external get_value : Obj.t -> key -> Obj.t = "%array_unsafe_get"

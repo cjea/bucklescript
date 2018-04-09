@@ -33,7 +33,7 @@ external debugger : unit -> unit = "#debugger"
 
 external raw_expr : string -> 'a = "#raw_expr"
 external raw_stmt : string -> 'a = "#raw_stmt"
-external raw_function: string -> string list -> 'a = "#raw_function"
+external raw_function: string  -> 'a = "#raw_function"
 
 external unsafe_downgrade : 'a Js.t -> 'a = "#unsafe_downgrade"
 external fn_mk0 : (unit -> 'a0) -> (unit -> 'a0 [@bs]) = "#fn_mk" "0" 

@@ -554,7 +554,6 @@ and
     P.paren_group f 1 (fun _ ->
       comma_strings f params
     );
-    P.newline f ; 
     P.brace f (fun _ -> 
     P.string f s);
     cxt 

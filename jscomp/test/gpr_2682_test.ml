@@ -5,9 +5,8 @@
     }
   |}] : unit ); () *)
 
-  
 
-(* let forEach = [%raw function (a, b) -> {|
+
+let forEach = fun%raw a b -> {| 
   return a + b
-
-|}] *)
+|}
